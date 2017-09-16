@@ -5,16 +5,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/bwmarrin/discordgo",
-			"Comment": "v0.16.0-1-gd420e28",
-			"Rev": "d420e28024ad527390b43aa7f64e029083e11989"
-		},
-		{
-			"ImportPath": "github.com/gorilla/http",
-			"Rev": "5dff1c014197bd33cbefc3ff9de164ada759b81b"
-		},
-		{
-			"ImportPath": "github.com/gorilla/http/client",
-			"Rev": "5dff1c014197bd33cbefc3ff9de164ada759b81b"
+			"Comment": "v0.16.0-33-gc4a08de",
+			"Rev": "c4a08de52513a9057d4ebf127a23ba8f4160f8d8"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",

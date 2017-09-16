@@ -3,7 +3,7 @@ OUT_DIR=$(shell pwd)/bin
 OUT_FILE=$(OUT_DIR)/`basename $(PWD)`
 DOCKER_ID=`docker build -q .`
 
-all: clean
+all:
 	mkdir -p $(OUT_DIR)
 	$(GO_BUILD_ENV) go build -v -o $(OUT_FILE) .
 
