@@ -152,7 +152,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				URL: xkcd.Img,
 			},
 			Footer: &discordgo.MessageEmbedFooter{
-				Text:    "**@" + m.Author.String() + "**",
+				Text:    "@" + m.Author.String(),
 				IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
 			},
 		}
