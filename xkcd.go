@@ -143,11 +143,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		e := &discordgo.MessageEmbed{
-			Title:      "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
-			Decription: xkcd.Alt,
-			URL:        "https://xkcd.com/" + strconv.Itoa(xkcd.Num),
-			Color:      7506394,
-			Type:       "rich",
+			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
+			Description: xkcd.Alt,
+			URL:         "https://xkcd.com/" + strconv.Itoa(xkcd.Num),
+			Color:       7506394,
+			Type:        "rich",
 			Image: &discordgo.MessageEmbedImage{
 				URL: xkcd.Img,
 			},
