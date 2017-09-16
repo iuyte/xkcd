@@ -150,7 +150,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Image: &discordgo.MessageEmbedImage{
 				URL: xkcd.Img,
 			},
-			Fields: {&discordgo.MessageEmbedField{
+			Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{
 				Value: xkcd.Alt,
 			}},
 			Footer: &discordgo.MessageEmbedFooter{
