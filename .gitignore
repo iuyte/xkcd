@@ -83,9 +83,6 @@ anaconda-mode/
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
-# Golang project vendor packages which should be ignored
-vendor/
-
 ### Vim ###
 # swap
 [._]*.s[a-v][a-z]
