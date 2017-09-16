@@ -1,2 +1,2 @@
-# reveals
-Used to post reveals in VTOW
+# xkcd
+An XKCD discord bot written Go. Runs in Docker.
