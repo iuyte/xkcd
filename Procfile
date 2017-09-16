@@ -1,1 +1,1 @@
-worker: docker run `docker build -q`
+worker: bin/xkcd
