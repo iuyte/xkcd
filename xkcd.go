@@ -226,7 +226,7 @@ func Token() string {
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	s.UpdateStatus(0, "Always watching...")
+	s.UpdateStatus(0, prefix+"help")
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -288,10 +288,33 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
-		} else {
-			return
+			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
+		}
+		return
+	}
+
+	if c[0] == "help" {
+		e := &discordgo.MessageEmbed{
+			Title:       "Help",
+			Description: "How to use this here xkcd bot",
+			URL:         "https://xkcd.com/",
+			Color:       7506394,
+			Type:        "rich",
+			Fields: {
+				&discordgo.MessageEmbedField{
+					Name:  "Help",
+					Value: "Display this message",
+				},
+				&discordgo.MessageEmbedField{
+					Name:  "xkcd <comic number, name, regex or whatever>",
+					Value: "Get the designated comic",
+				},
+			},
+			Footer: &discordgo.MessageEmbedFooter{
+				Text:    "@" + m.Author.String(),
+				IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+			},
 		}
 
-		s.ChannelMessageSend(m.ChannelID, xkcd.Img)
 	}
 }
