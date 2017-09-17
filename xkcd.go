@@ -247,10 +247,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if c[0] == "xkcd" {
 		if len(c) < 2 {
 			c = append(c, "")
-		} else if len(c) > 2 {
-			c = append([]string{c[0]}, strings.Join(c[1:], " "))
 		}
-
 		var (
 			xkcd XKCD
 			err  error
@@ -262,10 +259,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err)
 			return
 		}
+
 		if r.MatchString(c[1]) {
 			xkcd, err = GetXkcdNum(c[1])
 		} else {
-			xkcd, err = GetXkcdTitle(c[1])
+			xkcd, err = GetXkcdTitle(strings.Join(c[1:], " "))
 		}
 		if err != nil {
 			fmt.Println(err)
