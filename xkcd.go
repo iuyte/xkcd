@@ -300,11 +300,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			URL:         "https://xkcd.com/",
 			Color:       7506394,
 			Type:        "rich",
-			Fields: {
-				&discordgo.MessageEmbedField{
-					Name:  "Help",
-					Value: "Display this message",
-				},
+			Fields: {&discordgo.MessageEmbedField{
+				Name:  "Help",
+				Value: "Display this message",
+			},
 				&discordgo.MessageEmbedField{
 					Name:  "xkcd <comic number, name, regex or whatever>",
 					Value: "Get the designated comic",
