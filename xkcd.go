@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -28,7 +30,7 @@ type XKCD struct {
 	Year       string `json:"year"`
 }
 
-func GetXkcd(num string) (xkcd XKCD, e error) {
+func GetXkcdNum(num string) (xkcd XKCD, e error) {
 	var (
 		r    *http.Response
 		data []byte
@@ -51,6 +53,117 @@ func GetXkcd(num string) (xkcd XKCD, e error) {
 	}
 
 	return xkcd, nil
+}
+
+type Rating struct {
+	Xkcd  XKCD
+	Score int
+}
+
+func ratingSort(a []Rating) []Rating {
+	if len(a) < 2 {
+		return a
+	}
+
+	left, right := 0, len(a)-1
+
+	pivotIndex := rand.Int() % len(a)
+
+	a[pivotIndex], a[right] = a[right], a[pivotIndex]
+
+	for i := range a {
+		if a[i].Score < a[right].Score {
+			a[i], a[left] = a[left], a[i]
+			left++
+		}
+	}
+
+	a[left], a[right] = a[right], a[left]
+
+	ratingSort(a[:left])
+	ratingSort(a[left+1:])
+
+	return a
+}
+
+func qsort(a []int, b []XKCD) ([]int, []XKCD) {
+	if len(a) < 2 {
+		return a, b
+	}
+
+	left, right := 0, len(a)-1
+	pivotIndex := rand.Int() % len(a)
+	a[pivotIndex], a[right] = a[right], a[pivotIndex]
+	b[pivotIndex], b[right] = b[right], b[pivotIndex]
+
+	for i := range a {
+		if a[i] < a[right] {
+			a[i], a[left] = a[left], a[i]
+			b[i], b[left] = b[left], b[i]
+			left++
+		}
+	}
+
+	a[left], a[right] = a[right], a[left]
+	b[left], b[right] = b[right], b[left]
+
+	a, b = qsort(a[:left], b[:left])
+	a, b = qsort(a[left+1:], b[:left+1])
+
+	return a, b
+}
+
+func GetXkcdTitle(title string) (xkcd XKCD, e error) {
+	title = strings.ToLower(title)
+	var (
+		data    []byte
+		ratings []Rating = make([]Rating, 10)
+		r       *http.Response
+		t       *regexp.Regexp
+		last    bool = false
+	)
+
+	t, e = regexp.Compile(title)
+	if e != nil {
+		return
+	}
+
+	for i := 1; !last; i++ {
+		r, e = http.Get("https://xkcd.com/" + strconv.Itoa(i) + "/info.0.json")
+		if e != nil {
+			break
+		}
+
+		data, e = func() ([]byte, error) {
+			defer r.Body.Close()
+			return ioutil.ReadAll(r.Body)
+		}()
+		if e != nil {
+			return
+		}
+
+		e = json.Unmarshal(data, &xkcd)
+		if e != nil {
+			e = nil
+			if i == 404 {
+				continue
+			}
+			break
+		}
+
+		var rating Rating
+		rating.Xkcd = xkcd
+		rating.Score = len(t.FindAll(data, -1))
+		if strings.Contains(strings.ToLower(xkcd.Title), title) {
+			rating.Score += 2
+		}
+		if rating.Score > 1 {
+			ratings = append(ratings, rating)
+		}
+	}
+	xkcd = ratingSort(ratings)[len(ratings)-1].Xkcd
+
+	return
 }
 
 const prefix string = ";"
@@ -104,7 +217,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 }
 
 func Token() string {
-	b, err := ioutil.ReadFile("./token.txt")
+	b, err := ioutil.ReadFile("token.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -134,9 +247,26 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if c[0] == "xkcd" {
 		if len(c) < 2 {
 			c = append(c, "")
+		} else if len(c) > 2 {
+			c = append([]string{c[0]}, strings.Join(c[1:], " "))
 		}
 
-		xkcd, err := GetXkcd(c[1])
+		var (
+			xkcd XKCD
+			err  error
+			r    *regexp.Regexp
+		)
+
+		r, err = regexp.Compile("^[0-9]+$")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if r.MatchString(c[1]) {
+			xkcd, err = GetXkcdNum(c[1])
+		} else {
+			xkcd, err = GetXkcdTitle(c[1])
+		}
 		if err != nil {
 			fmt.Println(err)
 			return
