@@ -173,7 +173,7 @@ var (
 func main() {
 	token = Token()
 	if token == "" {
-		fmt.Println("No token provided. Please place a token followed by a ';' at ../token.txt")
+		fmt.Println("No token provided. Please place a token followed by a ';' at token.txt")
 		return
 	}
 
@@ -215,7 +215,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 }
 
 func Token() string {
-	b, err := ioutil.ReadFile("token.txt")
+	b, err := ioutil.ReadFile("/token.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -307,6 +307,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					Name:  "xkcd <comic number, name, regex or whatever>",
 					Value: "Get the designated comic",
 				},
+				&discordgo.MessageEmbedField{
+					Name:  "latest",
+					Value: "The latest and greatest xkcd",
+				},
 			},
 			Footer: &discordgo.MessageEmbedFooter{
 				Text:    "@" + m.Author.String(),
@@ -321,5 +325,27 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "latest" {
+		xkcd, err := GetLatest()
+		e := &discordgo.MessageEmbed{
+			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
+			Description: xkcd.Alt,
+			URL:         "https://xkcd.com/" + strconv.Itoa(xkcd.Num),
+			Color:       7506394,
+			Type:        "rich",
+			Image: &discordgo.MessageEmbedImage{
+				URL: xkcd.Img,
+			},
+			Footer: &discordgo.MessageEmbedFooter{
+				Text:    "@" + m.Author.String(),
+				IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+			},
+		}
+
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
+		if err != nil {
+			fmt.Println(err)
+			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
+		}
+		return
 	}
 }
