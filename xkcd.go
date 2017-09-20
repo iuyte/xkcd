@@ -30,6 +30,31 @@ type XKCD struct {
 	Year       string `json:"year"`
 }
 
+func GetLatest() (xkcd XKCD, e error) {
+	var (
+		r    *http.Response
+		data []byte
+	)
+
+	r, e = http.Get("https://xkcd.com/info.0.json")
+	if e != nil {
+		return xkcd, e
+	}
+
+	defer r.Body.Close()
+	data, e = ioutil.ReadAll(r.Body)
+	if e != nil {
+		return xkcd, e
+	}
+
+	e = json.Unmarshal(data, &xkcd)
+	if e != nil {
+		return xkcd, e
+	}
+
+	return xkcd, nil
+}
+
 func GetXkcdNum(num string) (xkcd XKCD, e error) {
 	var (
 		r    *http.Response
@@ -84,33 +109,6 @@ func ratingSort(a []Rating) []Rating {
 	ratingSort(a[left+1:])
 
 	return a
-}
-
-func qsort(a []int, b []XKCD) ([]int, []XKCD) {
-	if len(a) < 2 {
-		return a, b
-	}
-
-	left, right := 0, len(a)-1
-	pivotIndex := rand.Int() % len(a)
-	a[pivotIndex], a[right] = a[right], a[pivotIndex]
-	b[pivotIndex], b[right] = b[right], b[pivotIndex]
-
-	for i := range a {
-		if a[i] < a[right] {
-			a[i], a[left] = a[left], a[i]
-			b[i], b[left] = b[left], b[i]
-			left++
-		}
-	}
-
-	a[left], a[right] = a[right], a[left]
-	b[left], b[right] = b[right], b[left]
-
-	a, b = qsort(a[:left], b[:left])
-	a, b = qsort(a[left+1:], b[:left+1])
-
-	return a, b
 }
 
 func GetXkcdTitle(title string) (xkcd XKCD, e error) {
@@ -320,5 +318,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+
+	if c[0] == "latest" {
 	}
 }
