@@ -81,7 +81,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 }
 
 func Token() string {
-	b, err := ioutil.ReadFile("/token.txt")
+	b, err := ioutil.ReadFile("token.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
