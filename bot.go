@@ -18,16 +18,9 @@ import (
 var (
 	prefix string = ";"
 	token  string
-	latest XKCD
 )
 
 func main() {
-	var err error
-	latest, err = GetLatest()
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	go func() {
 		t := time.NewTicker(time.Minute)
 		defer t.Stop()
@@ -159,7 +152,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "latest" {
-		xkcd := latest
+		xkcd, err := GetLatest()
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
 			Description: xkcd.Alt,
@@ -175,7 +172,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			},
 		}
 
-		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
@@ -184,10 +181,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "random" {
-		xkcd, err := GetXkcdNum(strconv.Itoa(rand.Intn(latest.Num + 1)))
+		xkcd, err := GetLatest()
 		if err != nil {
 			fmt.Println(err)
 		}
+		xkcd, err = GetXkcdNum(strconv.Itoa(rand.Intn(xkcd.Num + 1)))
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
 			Description: xkcd.Alt,
