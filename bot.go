@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	go func() {
 		t := time.NewTicker(time.Minute)
 		defer t.Stop()
