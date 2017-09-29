@@ -315,7 +315,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				co[3] = time.Now().Add(time.Hour * 24).Format(TimeFormat)
 			}
 
-			event, err := NewCalender(co[0], co[1], co[2], co[3], f.GuildID, f.ID, m.Author.ID)
+			var (
+				event *Calender
+				err   error
+			)
+			if len(co) > 4 {
+				event, err = NewCalender(co[0], co[1], co[2], co[3], f.GuildID, c[4], m.Author.ID)
+			} else {
+				event, err = NewCalender(co[0], co[1], co[2], co[3], f.GuildID, f.ID, m.Author.ID)
+			}
 			if err != nil {
 				fmt.Println(err)
 				return
