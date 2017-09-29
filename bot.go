@@ -18,9 +18,14 @@ import (
 var (
 	prefix string = ";"
 	token  string
+	dg     *discordgo.Session
 )
 
 func main() {
+	err := LoadCalenders()
+	if err != nil {
+		fmt.Println(err)
+	}
 	go func() {
 		t := time.NewTicker(time.Minute)
 		defer t.Stop()
@@ -36,7 +41,7 @@ func main() {
 		return
 	}
 
-	dg, err := discordgo.New("Bot " + token)
+	dg, err = discordgo.New("Bot " + token)
 	if err != nil {
 		fmt.Println("Error creating Discord session: ", err)
 		return
@@ -50,6 +55,8 @@ func main() {
 	if err != nil {
 		fmt.Println("Error opening Discord session: ", err)
 	}
+
+	go alertEvents()
 
 	fmt.Println("The bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -99,6 +106,79 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if c[0] == "ping" {
 		s.ChannelMessageSend(m.ChannelID, "pong!")
+		return
+	}
+
+	if c[0] == "help" {
+		var e *discordgo.MessageEmbed
+		e = &discordgo.MessageEmbed{
+			Title:       "Help",
+			Description: "How to use this here xkcd bot",
+			URL:         "https://xkcd.com/",
+			Color:       7506394,
+			Type:        "rich",
+			Fields: []*discordgo.MessageEmbedField{
+				&discordgo.MessageEmbedField{
+					Name:  "help",
+					Value: "Display this message",
+				},
+				&discordgo.MessageEmbedField{
+					Name:  "xkcd <comic number, name, regex or whatever>",
+					Value: "Get the designated comic",
+				},
+				&discordgo.MessageEmbedField{
+					Name:  "latest",
+					Value: "The latest and greatest xkcd",
+				},
+				&discordgo.MessageEmbedField{
+					Name:  "random",
+					Value: "A random comic",
+				},
+				&discordgo.MessageEmbedField{
+					Name:  "event",
+					Value: "An interface for interacting with calender events. Say `;help` event for more!",
+				},
+			},
+			Footer: &discordgo.MessageEmbedFooter{
+				Text:    "@" + m.Author.String(),
+				IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+			},
+		}
+
+		if len(c) > 1 {
+			if c[1] == "event" {
+				e = &discordgo.MessageEmbed{
+					Title:       "Help",
+					Description: "How to use `event` commands on this here xkcd bot",
+					URL:         "https://xkcd.com/",
+					Color:       7506394,
+					Type:        "rich",
+					Fields: []*discordgo.MessageEmbedField{
+						&discordgo.MessageEmbedField{
+							Name:  TimeFormat,
+							Value: "When creating events, be sure to use this format for time",
+						},
+						&discordgo.MessageEmbedField{
+							Name:  "new <title>; <description>; <participants (mention them)>; <date/time>",
+							Value: "Create a new event. Note that you can use spaces in the fields, but the fields are seperated by semicolons",
+						},
+						&discordgo.MessageEmbedField{
+							Name:  "list",
+							Value: "List the events that exist",
+						},
+					},
+					Footer: &discordgo.MessageEmbedFooter{
+						Text:    "@" + m.Author.String(),
+						IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+					},
+				}
+			}
+		}
+
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
 	}
 
@@ -213,40 +293,163 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if c[0] == "help" {
-		e := &discordgo.MessageEmbed{
-			Title:       "Help",
-			Description: "How to use this here xkcd bot",
-			URL:         "https://xkcd.com/",
-			Color:       7506394,
-			Type:        "rich",
-			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{
-					Name:  "Help",
-					Value: "Display this message",
-				},
-				&discordgo.MessageEmbedField{
-					Name:  "xkcd <comic number, name, regex or whatever>",
-					Value: "Get the designated comic",
-				},
-				&discordgo.MessageEmbedField{
-					Name:  "latest",
-					Value: "The latest and greatest xkcd",
-				},
-				&discordgo.MessageEmbedField{
-					Name:  "random",
-					Value: "A random comic",
-				},
-			},
-			Footer: &discordgo.MessageEmbedFooter{
-				Text:    "@" + m.Author.String(),
-				IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
-			},
+	if c[0] == "event" {
+		if len(c) < 2 {
+			return
 		}
 
-		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
-		if err != nil {
-			fmt.Println(err)
+		if c[1] == "new" {
+			co := strings.Split(strings.Join(c[2:], " "), ";")
+			for i, ci := range co {
+				co[i] = strings.TrimSpace(ci)
+			}
+			if len(co) < 4 {
+				return
+			}
+			f, erro := s.Channel(m.ChannelID)
+			if erro != nil {
+				fmt.Println(erro)
+				return
+			}
+			if _, err := time.Parse(TimeFormat, co[3]); err != nil {
+				co[3] = time.Now().Add(time.Hour * 24).Format(TimeFormat)
+			}
+
+			event, err := NewCalender(co[0], co[1], co[2], co[3], f.GuildID, f.ID, m.Author.ID)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			e := &discordgo.MessageEmbed{
+				Color: 7506394,
+				Type:  "rich",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:   "Event Created: " + event.Title,
+						Value:  event.Description,
+						Inline: true,
+					},
+					&discordgo.MessageEmbedField{
+						Name:   "Time",
+						Value:  event.Date,
+						Inline: true,
+					},
+					&discordgo.MessageEmbedField{
+						Name:   "Participants",
+						Value:  event.Participants,
+						Inline: true,
+					},
+				},
+				Footer: &discordgo.MessageEmbedFooter{
+					Text:    "@" + m.Author.String(),
+					IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+				},
+			}
+
+			_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
 		}
+
+		if c[1] == "list" {
+			var fields []*discordgo.MessageEmbedField
+			for _, event := range Events {
+				fields = append(fields,
+					&discordgo.MessageEmbedField{
+						Name:  event.Title,
+						Value: event.Date,
+					})
+			}
+			e := &discordgo.MessageEmbed{
+				Color:  7506394,
+				Type:   "rich",
+				Fields: fields,
+				Footer: &discordgo.MessageEmbedFooter{
+					Text:    "@" + m.Author.String(),
+					IconURL: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".png",
+				},
+			}
+
+			_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+}
+
+func alertEvents() {
+	t := time.NewTicker(5 * time.Second)
+	var e *discordgo.MessageEmbed
+	for {
+		for i, event := range Events {
+			et, err := time.Parse(TimeFormat, event.Date)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			author, err := dg.User(event.AuthorID)
+			if err != nil {
+				fmt.Println(err)
+				e = &discordgo.MessageEmbed{
+					Color: 7506394,
+					Type:  "rich",
+					Fields: []*discordgo.MessageEmbedField{
+						&discordgo.MessageEmbedField{
+							Name:   event.Title,
+							Value:  event.Description,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Time",
+							Value:  event.Date,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Participants",
+							Value:  "@" + event.Participants,
+							Inline: true,
+						},
+					},
+				}
+			} else if time.Now().After(et) {
+				e = &discordgo.MessageEmbed{
+					Color: 7506394,
+					Type:  "rich",
+					Fields: []*discordgo.MessageEmbedField{
+						&discordgo.MessageEmbedField{
+							Name:   event.Title,
+							Value:  event.Description,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Time",
+							Value:  event.Date,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Participants",
+							Value:  event.Participants,
+							Inline: true,
+						},
+					},
+					Footer: &discordgo.MessageEmbedFooter{
+						Text:    "@" + author.String(),
+						IconURL: "https://cdn.discordapp.com/avatars/" + author.ID + "/" + author.Avatar + ".png",
+					},
+				}
+
+				_, err := dg.ChannelMessageSendEmbed(event.ChannelID, e)
+				if err != nil {
+					fmt.Println(err)
+				}
+				Events = append(Events[:i], Events[i+1:]...)
+				go SaveCalenders()
+			}
+		}
+		<-t.C
 	}
 }
