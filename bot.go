@@ -319,7 +319,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				event *Calender
 				err   error
 			)
-
 			if len(co) > 4 {
 				event, err = NewCalender(co[0], co[1], co[2], co[3], f.GuildID, c[4], m.Author.ID)
 			} else {
