@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2017 Ethan Wells
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package main
 
 import (
@@ -54,7 +71,7 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 		}
 		return nil
 	}(); ggl == nil {
-		return errors.New("Cannot read source link")
+		return errors.New("source link read problem")
 	}
 
 	var objs []ObjectResponse
@@ -99,15 +116,20 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 
 	for _, o := range objs {
 		defer o.Resp.Body.Close()
+		opts := dca.StdEncodeOptions
+		opts.RawOutput = true
+		opts.Bitrate = 120
 
-		rd := o.Resp.Body
-		decoder := dca.NewDecoder(rd)
+		encoder, err := dca.EncodeMem(o.Resp.Body, opts)
+		if err != nil {
+			return errors.New("encoding bork")
+		}
 
 		for {
-			frame, err := decoder.OpusFrame()
+			frame, err := encoder.OpusFrame()
 			if err != nil {
 				if err != io.EOF {
-					return errors.New("connection bork 2")
+					return errors.New("connection bork 1")
 				}
 
 				break
