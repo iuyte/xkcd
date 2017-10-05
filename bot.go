@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2017 Ethan Wells
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package main
 
 import (
@@ -26,6 +43,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	go func() {
 		t := time.NewTicker(time.Minute)
 		defer t.Stop()
@@ -118,23 +136,23 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Color:       7506394,
 			Type:        "rich",
 			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "help",
 					Value: "Display this message",
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "xkcd <comic number, name, regex or whatever>",
 					Value: "Get the designated comic",
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "latest",
 					Value: "The latest and greatest xkcd",
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "random",
 					Value: "A random comic",
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "event",
 					Value: "An interface for interacting with calender events. Say `;help` event for more!",
 				},
@@ -154,15 +172,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					Color:       7506394,
 					Type:        "rich",
 					Fields: []*discordgo.MessageEmbedField{
-						&discordgo.MessageEmbedField{
+						{
 							Name:  TimeFormat,
 							Value: "When creating events, be sure to use this format for time",
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:  "new <title>; <description>; <participants (mention them)>; <date/time>",
 							Value: "Create a new event. Note that you can use spaces in the fields, but the fields are seperated by semicolons",
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:  "list",
 							Value: "List the events that exist",
 						},
@@ -293,6 +311,53 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if c[0] == "play" {
+		if len(c) < 2 {
+			return
+		}
+		o := strings.Join(c[1:], " ")
+
+		var (
+			err   error
+			tch   *discordgo.Channel
+			vch   *discordgo.VoiceState
+			guild *discordgo.Guild
+		)
+
+		tch, err = s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		guild, err = s.Guild(tch.GuildID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		for _, vs := range guild.VoiceStates {
+			if vs.UserID == m.Author.ID {
+				vch = vs
+				break
+			}
+		}
+		if vch == nil {
+			fmt.Println("User not joined channel")
+			return
+		}
+
+		fmt.Println(o)
+		fmt.Println(s.ShardCount)
+		fmt.Println(tch.GuildID)
+		fmt.Println(vch.ChannelID)
+
+		err = Stream(o, s, tch.GuildID, vch.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
 	if c[0] == "event" {
 		if len(c) < 2 {
 			return
@@ -332,17 +397,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				Color: 7506394,
 				Type:  "rich",
 				Fields: []*discordgo.MessageEmbedField{
-					&discordgo.MessageEmbedField{
+					{
 						Name:   "Event Created: " + event.Title,
 						Value:  event.Description,
 						Inline: true,
 					},
-					&discordgo.MessageEmbedField{
+					{
 						Name:   "Time",
 						Value:  event.Date,
 						Inline: true,
 					},
-					&discordgo.MessageEmbedField{
+					{
 						Name:   "Participants",
 						Value:  event.Participants,
 						Inline: true,
@@ -406,17 +471,17 @@ func alertEvents() {
 					Color: 7506394,
 					Type:  "rich",
 					Fields: []*discordgo.MessageEmbedField{
-						&discordgo.MessageEmbedField{
+						{
 							Name:   event.Title,
 							Value:  event.Description,
 							Inline: true,
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:   "Time",
 							Value:  event.Date,
 							Inline: true,
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:   "Participants",
 							Value:  "@" + event.Participants,
 							Inline: true,
@@ -428,17 +493,17 @@ func alertEvents() {
 					Color: 7506394,
 					Type:  "rich",
 					Fields: []*discordgo.MessageEmbedField{
-						&discordgo.MessageEmbedField{
+						{
 							Name:   event.Title,
 							Value:  event.Description,
 							Inline: true,
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:   "Time",
 							Value:  event.Date,
 							Inline: true,
 						},
-						&discordgo.MessageEmbedField{
+						{
 							Name:   "Participants",
 							Value:  event.Participants,
 							Inline: true,
