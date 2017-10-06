@@ -47,6 +47,8 @@ const (
 	initVimeo      string = "vimeo"
 )
 
+var blocker chan bool = make(chan bool, 1)
+
 type ObjectResponse struct {
 	Resp *http.Response
 	Name string
@@ -106,6 +108,7 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 		})
 	}
 
+	blocker <- true
 	vc, err := s.ChannelVoiceJoin(guildID, channelID, false, true)
 	if err != nil {
 		return err
@@ -145,5 +148,6 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 	vc.Speaking(false)
 	time.Sleep(250 * time.Millisecond)
 	vc.Disconnect()
+	<-blocker
 	return nil
 }
