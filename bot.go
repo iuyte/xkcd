@@ -36,6 +36,7 @@ var (
 	prefix string = ";"
 	token  string
 	dg     *discordgo.Session
+	stop   bool = false
 )
 
 func main() {
@@ -351,11 +352,16 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println(tch.GuildID)
 		fmt.Println(vch.ChannelID)
 
-		err = Stream(o, s, tch.GuildID, vch.ChannelID)
+		err = NStream(o, tch.GuildID, vch.ChannelID, s)
 		if err != nil {
 			fmt.Println(err)
 		}
+
 		return
+	}
+
+	if c[0] == "skip" {
+		stop = true
 	}
 
 	if c[0] == "event" {
