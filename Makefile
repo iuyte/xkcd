@@ -1,4 +1,4 @@
-GO_BUILD_ENV := CGO_ENABLED=1 GOOS=linux GOARCH=arm
+GO_BUILD_ENV := CGO_ENABLED=0 GOOS=linux GOARCH=arm
 OUT_DIR=$(shell pwd)/bin
 OUT_FILE=$(OUT_DIR)/`basename $(PWD)`
 DOCKER_ID=`docker build -q .`

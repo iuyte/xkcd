@@ -36,6 +36,7 @@ import (
 	"github.com/dwarvesf/glod/youtube"
 	"github.com/dwarvesf/glod/zing"
 	"github.com/jonas747/dca"
+	"github.com/rylio/ytdl"
 )
 
 const (
@@ -54,7 +55,58 @@ type ObjectResponse struct {
 	Name string
 }
 
-func Stream(link string, s *discordgo.Session, guildID, channelID string) error {
+func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
+	// Change these accordingly
+	options := dca.StdEncodeOptions
+	options.RawOutput = true
+	options.Bitrate = 96
+	options.Application = "lowdelay"
+
+	videoInfo, err := ytdl.GetVideoInfo(videoURL)
+	if err != nil {
+		return err
+	}
+
+	format := videoInfo.Formats.Extremes(ytdl.FormatAudioBitrateKey, true)[0]
+	downloadURL, err := videoInfo.GetDownloadURL(format)
+	if err != nil {
+		return err
+	}
+
+	encodingSession, err := dca.EncodeFile(downloadURL.String(), options)
+	if err != nil {
+		return err
+	}
+	defer encodingSession.Cleanup()
+
+	defer func() {
+		<-blocker
+	}()
+	blocker <- true
+	var vc *discordgo.VoiceConnection
+	vc, err = s.ChannelVoiceJoin(guildID, channelID, false, true)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		vc.Speaking(false)
+		vc.Disconnect()
+	}()
+
+	vc.Speaking(true)
+	done := make(chan error)
+	dca.NewStream(encodingSession, vc, done)
+	err = <-done
+	if err != nil && err != io.EOF {
+		return err
+	}
+	return nil
+}
+
+func Stream(link string, stop *bool, err *error, s *discordgo.Session, guildID, channelID string) {
+	defer func() {
+		*stop = false
+	}()
 	var ggl glod.Source
 	if ggl = func() glod.Source {
 		switch {
@@ -73,13 +125,15 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 		}
 		return nil
 	}(); ggl == nil {
-		return errors.New("source link read problem")
+		*err = errors.New("source link read problem")
+		return
 	}
 
 	var objs []ObjectResponse
-	listResponse, err := ggl.GetDirectLink(link)
-	if err != nil {
-		return err
+	listResponse, e := ggl.GetDirectLink(link)
+	if e != nil {
+		*err = e
+		return
 	}
 	for _, r := range listResponse {
 		temp := r.StreamURL
@@ -88,9 +142,10 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 			temp = splitUrl[0]
 		}
 
-		resp, err := http.Get(temp)
-		if err != nil {
-			return errors.New("failed to get response from  stream")
+		resp, e := http.Get(temp)
+		if e != nil {
+			*err = errors.New("failed to get response from stream")
+			return
 		}
 
 		fullName := fmt.Sprintf("%s%s", r.Title, ".mp3")
@@ -108,46 +163,43 @@ func Stream(link string, s *discordgo.Session, guildID, channelID string) error 
 		})
 	}
 
-	blocker <- true
-	vc, err := s.ChannelVoiceJoin(guildID, channelID, false, true)
-	if err != nil {
-		return err
-	}
+	var (
+		vc *discordgo.VoiceConnection
+	)
 
-	time.Sleep(250 * time.Millisecond)
 	vc.Speaking(true)
-
 	for _, o := range objs {
-		defer o.Resp.Body.Close()
-		opts := dca.StdEncodeOptions
-		opts.RawOutput = true
-		opts.Bitrate = 120
+		func() {
+			defer o.Resp.Body.Close()
+			opts := dca.StdEncodeOptions
+			opts.RawOutput = true
+			opts.Bitrate = 120
 
-		encoder, err := dca.EncodeMem(o.Resp.Body, opts)
-		if err != nil {
-			return errors.New("encoding bork")
-		}
+			encoder, e := dca.EncodeMem(o.Resp.Body, opts)
+			if e != nil {
+				*err = errors.New("encoding bork")
+				return
+			}
 
-		for {
-			frame, err := encoder.OpusFrame()
-			if err != nil {
-				if err != io.EOF {
-					return errors.New("connection bork 1")
+			for !*stop {
+				frame, e := encoder.OpusFrame()
+				if e != nil {
+					if e != io.EOF {
+						*err = errors.New("connection bork 1")
+						return
+					}
+
+					break
 				}
 
-				break
+				select {
+				case vc.OpusSend <- frame:
+				case <-time.After(time.Second):
+					*err = errors.New("connection bork 2")
+					return
+				}
 			}
-
-			select {
-			case vc.OpusSend <- frame:
-			case <-time.After(time.Second):
-				return errors.New("connection bork 2")
-			}
-		}
+		}()
 	}
-	vc.Speaking(false)
-	time.Sleep(250 * time.Millisecond)
-	vc.Disconnect()
-	<-blocker
-	return nil
+	*err = errors.New("Done")
 }
