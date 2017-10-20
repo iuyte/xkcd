@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Ethan Wells
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,6 @@ var (
 	prefix string = ";"
 	token  string
 	dg     *discordgo.Session
-	stop   bool = false
 )
 
 func main() {
@@ -100,7 +99,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 }
 
 func Token() string {
-	b, err := ioutil.ReadFile("token.txt")
+	b, err := ioutil.ReadFile("/token.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -352,6 +351,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println(tch.GuildID)
 		fmt.Println(vch.ChannelID)
 
+		Stop[tch.GuildID] = false
 		err = NStream(o, tch.GuildID, vch.ChannelID, s)
 		if err != nil {
 			fmt.Println(err)
@@ -361,7 +361,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "skip" {
-		stop = true
+		tch, err := s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		Stop[tch.GuildID] = true
 	}
 
 	if c[0] == "event" {

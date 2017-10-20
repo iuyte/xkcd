@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Ethan Wells
  *
  * This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,10 @@ const (
 	initVimeo      string = "vimeo"
 )
 
-var blocker chan bool = make(chan bool, 1)
+var (
+	blocker chan bool       = make(chan bool, 1)
+	Stop    map[string]bool = make(map[string]bool)
+)
 
 type ObjectResponse struct {
 	Resp *http.Response
@@ -56,7 +59,6 @@ type ObjectResponse struct {
 }
 
 func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
-	// Change these accordingly
 	options := dca.StdEncodeOptions
 	options.RawOutput = true
 	options.Bitrate = 96
@@ -67,7 +69,11 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 		return err
 	}
 
-	format := videoInfo.Formats.Extremes(ytdl.FormatAudioBitrateKey, true)[0]
+	formats := videoInfo.Formats.Extremes(ytdl.FormatAudioBitrateKey, true)
+	if len(formats) < 1 {
+		return errors.New("Link error line 72")
+	}
+	format := formats[0]
 	downloadURL, err := videoInfo.GetDownloadURL(format)
 	if err != nil {
 		return err
@@ -77,26 +83,33 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 	if err != nil {
 		return err
 	}
-	defer encodingSession.Cleanup()
 
 	defer func() {
+		encodingSession.Cleanup()
 		<-blocker
+		Stop[guildID] = false
 	}()
 	blocker <- true
 	var vc *discordgo.VoiceConnection
-	vc, err = s.ChannelVoiceJoin(guildID, channelID, false, true)
-	if err != nil {
-		return err
-	}
 	defer func() {
 		vc.Speaking(false)
 		vc.Disconnect()
 	}()
+	vc, err = s.ChannelVoiceJoin(guildID, channelID, false, true)
+	if err != nil {
+		return err
+	}
 
 	vc.Speaking(true)
 	done := make(chan error)
 	dca.NewStream(encodingSession, vc, done)
-	err = <-done
+	go func() {
+		err = <-done
+		Stop[guildID] = true
+	}()
+	for !Stop[guildID] {
+		time.Sleep(250 * time.Millisecond)
+	}
 	if err != nil && err != io.EOF {
 		return err
 	}

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017 Ethan Wells
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,9 @@ type Calender struct {
 	Title        string `json:"Title"`
 }
 
-var Events []Calender
+var (
+	Events []Calender
+)
 
 func NewCalender(title, description, role, date, serverID, channelID, authorID string) (c *Calender, e error) {
 	t, err := time.Parse(TimeFormat, date)
@@ -60,7 +62,7 @@ func NewCalender(title, description, role, date, serverID, channelID, authorID s
 
 func LoadCalenders() error {
 	Events = make([]Calender, 0)
-	b, err := ioutil.ReadFile("./events.json")
+	b, err := ioutil.ReadFile("/events.json")
 	if err != nil {
 		return err
 	}
