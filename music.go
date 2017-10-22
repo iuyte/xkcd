@@ -39,6 +39,18 @@ import (
 	"github.com/rylio/ytdl"
 )
 
+type ObjectResponse struct {
+	Resp *http.Response
+	Name string
+}
+
+type NStreamer struct {
+	Url       string
+	GuildID   string
+	ChannelID string
+	S         *discordgo.Session
+}
+
 const (
 	initZingMp3    string = "zing"
 	initYoutube    string = "youtube"
@@ -49,13 +61,13 @@ const (
 )
 
 var (
-	blocker chan bool       = make(chan bool, 1)
-	Stop    map[string]bool = make(map[string]bool)
+	blocker chan bool             = make(chan bool, 1)
+	Stop    map[string]bool       = make(map[string]bool)
+	Streams map[string]*NStreamer = make(map[string]*NStreamer)
 )
 
-type ObjectResponse struct {
-	Resp *http.Response
-	Name string
+func (s *NStreamer) Stream() error {
+	return NStream(s.Url, s.GuildID, s.ChannelID, s.S)
 }
 
 func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {

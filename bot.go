@@ -36,6 +36,7 @@ var (
 	prefix string = ";"
 	token  string
 	dg     *discordgo.Session
+	xkcds  []XKCD
 )
 
 func main() {
@@ -50,6 +51,11 @@ func main() {
 		for {
 			<-t.C
 			rand.Seed(time.Now().Unix())
+			var err error
+			err, xkcds = StoreXKCD()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}()
 
@@ -208,7 +214,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			xkcd XKCD
 			err  error
 			r    *regexp.Regexp
+			num  int
 		)
+		num, err = strconv.Atoi(c[1])
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		r, err = regexp.Compile("^[0-9]+$")
 		if err != nil {
@@ -217,9 +228,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		if r.MatchString(c[1]) {
-			xkcd, err = GetXkcdNum(c[1])
+			xkcd = xkcds[num]
 		} else {
-			xkcd, err = GetXkcdTitle(strings.Join(c[1:], " "))
+			xkcd, err = GetXkcdTitleLocal(xkcds, strings.Join(c[1:], " "))
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -250,10 +261,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "latest" {
-		xkcd, err := GetLatest()
-		if err != nil {
-			fmt.Println(err)
-		}
+		xkcd := xkcds[len(xkcds)-1]
 
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
@@ -270,7 +278,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			},
 		}
 
-		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
@@ -279,14 +287,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "random" {
-		xkcd, err := GetLatest()
-		if err != nil {
-			fmt.Println(err)
-		}
-		xkcd, err = GetXkcdNum(strconv.Itoa(rand.Intn(xkcd.Num + 1)))
-		if err != nil {
-			fmt.Println(err)
-		}
+		xkcd := xkcds[rand.Intn(len(xkcds))]
 
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
@@ -303,7 +304,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			},
 		}
 
-		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
@@ -316,6 +317,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		o := strings.Join(c[1:], " ")
+		o = strings.TrimRight(strings.TrimLeft(o, "<"), ">")
 
 		var (
 			err   error
@@ -346,13 +348,20 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		fmt.Println(o)
-		fmt.Println(s.ShardCount)
-		fmt.Println(tch.GuildID)
-		fmt.Println(vch.ChannelID)
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		Stop[tch.GuildID] = false
-		err = NStream(o, tch.GuildID, vch.ChannelID, s)
+		Streams[tch.GuildID] = &NStreamer{
+			Url:       o,
+			GuildID:   tch.GuildID,
+			ChannelID: vch.ChannelID,
+			S:         s,
+		}
+
+		err = Streams[tch.GuildID].Stream()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -366,7 +375,46 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err)
 			return
 		}
+		Streams[tch.GuildID] = nil
 		Stop[tch.GuildID] = true
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
+	if c[0] == "repeat" {
+		tch, err := s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		current := Streams[tch.GuildID]
+		if current == nil {
+			err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		for {
+			for !Stop[tch.GuildID] {
+				time.Sleep(time.Second)
+			}
+			err = Streams[tch.GuildID].Stream()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
 	}
 
 	if c[0] == "event" {
