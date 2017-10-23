@@ -63,6 +63,7 @@ func main() {
 		fmt.Println("No token provided. Please set DISCORD_TOKEN to the appropriate token")
 		return
 	}
+	fmt.Println("Using token: ", token)
 
 	dg, err = discordgo.New("Bot " + token)
 	if err != nil {
@@ -103,8 +104,12 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 	}
 }
 
-func Token() string {
-	return os.Getenv("DISCORD_TOKEN")
+func Token() (token string) {
+	token = os.Getenv("DISCORD_TOKEN")
+	if strings.Contains(token, "$") {
+		token = os.Args[1]
+	}
+	return
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
