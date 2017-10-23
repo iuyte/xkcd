@@ -19,7 +19,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -61,7 +60,7 @@ func main() {
 
 	token = Token()
 	if token == "" {
-		fmt.Println("No token provided. Please place a token followed by a ';' at token.txt")
+		fmt.Println("No token provided. Please set DISCORD_TOKEN to the appropriate token")
 		return
 	}
 
@@ -105,12 +104,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 }
 
 func Token() string {
-	b, err := ioutil.ReadFile("/token.txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-	c := string(b)
-	return strings.Split(c, ";")[0]
+	return os.Getenv("DISCORD_TOKEN")
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
