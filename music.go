@@ -85,7 +85,7 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 	if len(formats) < 1 {
 		return errors.New("Link error")
 	}
-	format := ytdl.FORMATS[250] // formats[0]
+	format := formats[0]
 	downloadURL, err := videoInfo.GetDownloadURL(format)
 	if err != nil {
 		return err

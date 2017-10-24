@@ -64,7 +64,6 @@ func main() {
 		fmt.Println("No token provided. Please set DISCORD_TOKEN to the appropriate token")
 		return
 	}
-	fmt.Println("Using token: ", token)
 
 	dg, err = discordgo.New("Bot " + token)
 	if err != nil {
