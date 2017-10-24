@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -106,8 +107,15 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 func Token() (token string) {
 	token = os.Getenv("DISCORD_TOKEN")
-	if strings.Contains(token, "$") {
+	if strings.Contains(token, "$") && len(os.Args) > 1 {
 		token = os.Args[1]
+	} else {
+		b, err := ioutil.ReadFile("/token.txt")
+		if err != nil {
+			fmt.Println(err)
+		}
+		c := string(b)
+		return strings.TrimSpace(strings.Trim(strings.Split(c, ";")[0], "\n"))
 	}
 	return
 }

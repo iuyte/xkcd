@@ -12,7 +12,7 @@ arm:
 	$(GO_BUILD_ENV) GOARCH=arm go build -v -o $(OUT_FILE) .
 
 docker:
-	docker build --build-arg DISCORD_TOKEN='$(DISCORD_TOKEN)' -t iuyte/xkcd .
+	docker build -t iuyte/xkcd . --build-arg TOKEN='$(DISCORD_TOKEN)'
 
 run:
 	docker run iuyte/xkcd
