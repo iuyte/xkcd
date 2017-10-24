@@ -4,93 +4,101 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
-          "ImportPath": "github.com/PuerkitoBio/goquery",
-          "Comment": "v1.1.0-9-g63e7f87",
-          "Rev": "63e7f870c2298e42bfc8b200db92e175a3e71120"
-        },
-      {
-        "ImportPath": "github.com/andybalholm/cascadia",
-        "Rev": "349dd0209470eabd9514242c688c403c0926d266"
-      },
-      {
+			"ImportPath": "github.com/PuerkitoBio/goquery",
+			"Comment": "v1.1.0-9-g63e7f87",
+			"Rev": "63e7f870c2298e42bfc8b200db92e175a3e71120"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v1.0.3-11-g89742ae",
+			"Rev": "89742aefa4b206dcf400792f3bd35b542998eb3b"
+		},
+		{
+			"ImportPath": "github.com/andybalholm/cascadia",
+			"Rev": "349dd0209470eabd9514242c688c403c0926d266"
+		},
+		{
 			"ImportPath": "github.com/bwmarrin/discordgo",
 			"Comment": "v0.16.0-33-gc4a08de",
 			"Rev": "c4a08de52513a9057d4ebf127a23ba8f4160f8d8"
 		},
 		{
-          "ImportPath": "github.com/cheggaaa/pb",
-          "Comment": "v1.0.18",
-          "Rev": "657164d0228d6bebe316fdf725c69f131a50fb10"
-        },
-      {
-        "ImportPath": "github.com/dwarvesf/glod",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/chiasenhac",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/facebook",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/nhaccuatui",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/soundcloud",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/vimeo",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/youtube",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
-        "ImportPath": "github.com/dwarvesf/glod/zing",
-        "Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-      },
-      {
+			"ImportPath": "github.com/dwarvesf/glod",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/chiasenhac",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/facebook",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/soundcloud",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/vimeo",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/youtube",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
+			"ImportPath": "github.com/dwarvesf/glod/zing",
+			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
+		},
+		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Comment": "v1.2.0-6-ga69d9f6",
 			"Rev": "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
 		},
 		{
-          "ImportPath": "github.com/jonas747/dca",
-          "Rev": "997ba4c88798565d8ac7d036e261f77cea2045ad"
-        },
-      {
-        "ImportPath": "github.com/jonas747/ogg",
-        "Rev": "b4f6f4cf3757a3bf88eae9222045b99b9d76d8ca"
-      },
-      {
-        "ImportPath": "github.com/mattn/go-runewidth",
-        "Comment": "v0.0.2-3-g97311d9",
-        "Rev": "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
-      },
-      {
+			"ImportPath": "github.com/jonas747/dca",
+			"Rev": "997ba4c88798565d8ac7d036e261f77cea2045ad"
+		},
+		{
+			"ImportPath": "github.com/jonas747/ogg",
+			"Rev": "b4f6f4cf3757a3bf88eae9222045b99b9d76d8ca"
+		},
+		{
+			"ImportPath": "github.com/rylio/ytdl",
+			"Comment": "v0.5.1",
+			"Rev": "bd30f781270fa4d6df59e2a49948cd157030a2c6"
+		},
+		{
 			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
-			"Rev": "81e90905daefcd6fd217b62423c0908922eadb30"
+			"Rev": "ed5229da99e3a6df35c756cd64b6982d19505d86"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/poly1305",
-			"Rev": "81e90905daefcd6fd217b62423c0908922eadb30"
+			"Rev": "ed5229da99e3a6df35c756cd64b6982d19505d86"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
-			"Rev": "81e90905daefcd6fd217b62423c0908922eadb30"
-        },
-      {
-        "ImportPath": "golang.org/x/net/html",
-        "Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
-      },
-      {
-        "ImportPath": "golang.org/x/net/html/atom",
-        "Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+			"Rev": "ed5229da99e3a6df35c756cd64b6982d19505d86"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "ed5229da99e3a6df35c756cd64b6982d19505d86"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows",
+			"Rev": "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
 		}
 	]
 }
