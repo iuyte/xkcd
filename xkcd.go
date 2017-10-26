@@ -126,10 +126,10 @@ func GetXkcdTitle(title string) (xkcd XKCD, e error) {
 	title = strings.ToLower(title)
 	var (
 		data    []byte
-		ratings []Rating = make([]Rating, 10)
+		ratings = make([]Rating, 10)
 		r       *http.Response
 		t       *regexp.Regexp
-		last    bool = false
+		last    = false
 	)
 
 	t, e = regexp.Compile(title)
@@ -179,7 +179,7 @@ func GetXkcdTitleLocal(xkcds []XKCD, title string) (xkcd XKCD, e error) {
 	title = strings.ToLower(title)
 	var (
 		data    []byte
-		ratings []Rating = make([]Rating, 10)
+		ratings = make([]Rating, 10)
 		t       *regexp.Regexp
 	)
 
@@ -215,17 +215,16 @@ func GetXkcdTitleLocal(xkcds []XKCD, title string) (xkcd XKCD, e error) {
 	return
 }
 
-func StoreXKCD() (e error, xkcds []XKCD) {
+func StoreXKCD() (xkcds []XKCD, e error) {
 	var (
 		xkcd XKCD
-		data []byte = make([]byte, 0)
+		data = make([]byte, 0)
 		r    *http.Response
-		last bool = false
 	)
-	xkcds = make([]XKCD, 1)
-	xkcds[0] = XKCD{}
+	xkcds = []XKCD{{}}
+	xkcds = append(xkcds, XKCD{})
 
-	for i := 1; !last; i++ {
+	for i := 1; ; i++ {
 		r, e = http.Get("https://xkcd.com/" + strconv.Itoa(i) + "/info.0.json")
 		if e != nil {
 			break
@@ -236,7 +235,10 @@ func StoreXKCD() (e error, xkcds []XKCD) {
 			return ioutil.ReadAll(r.Body)
 		}()
 		if e != nil {
-			return
+			if i == 404 {
+				continue
+			}
+			break
 		}
 
 		e = json.Unmarshal(data, &xkcd)
@@ -247,7 +249,8 @@ func StoreXKCD() (e error, xkcds []XKCD) {
 			}
 			break
 		}
-		xkcds = append(xkcds, xkcd)
+		xkcds = append(xkcds, XKCD{})
+		xkcds[i] = xkcd
 	}
 	return
 }
