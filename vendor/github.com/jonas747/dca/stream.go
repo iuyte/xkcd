@@ -2,11 +2,10 @@ package dca
 
 import (
 	"errors"
+	"github.com/bwmarrin/discordgo"
 	"io"
 	"sync"
 	"time"
-
-	"github.com/bwmarrin/discordgo"
 )
 
 var (

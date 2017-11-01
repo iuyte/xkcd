@@ -19,17 +19,17 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
 
-	"fmt"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/dwarvesf/glod"
-	"github.com/dwarvesf/glod/chiasenhac"
 	"github.com/dwarvesf/glod/facebook"
 	"github.com/dwarvesf/glod/soundcloud"
 	"github.com/dwarvesf/glod/vimeo"
@@ -55,19 +55,44 @@ const (
 	initZingMp3    string = "zing"
 	initYoutube    string = "youtube"
 	initSoundCloud string = "soundcloud"
-	initChiaSeNhac string = "chiasenhac"
 	initFacebook   string = "facebook"
 	initVimeo      string = "vimeo"
 )
 
 var (
-	blocker chan bool             = make(chan bool, 1)
-	Stop    map[string]bool       = make(map[string]bool)
-	Streams map[string]*NStreamer = make(map[string]*NStreamer)
+	blocker = make(chan bool, 1)
+	Stop    = make(map[string]bool)
+	Streams = make(map[string]*NStreamer)
 )
 
 func (s *NStreamer) Stream() error {
 	return NStream(s.Url, s.GuildID, s.ChannelID, s.S)
+}
+
+func UrlFromSearch(tag string) (string, error) {
+	var (
+		b   []byte
+		url string = "http://www.youtube.com/results?search_query=" + tag
+	)
+	fmt.Println(url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	b, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	st := strings.Split(string(b),
+		"<a id=\"thumbnail\" class=\"yt-simple-endpoint inline-block style-scope ytd-thumbnail\" aria-hidden=\"true\" tabindex=\"-1\" href=\"")[1]
+	re := regexp.MustCompile("\\/watch?v=[^\"]+")
+	return "https://youtube.com/" + re.FindAllString(st, 1)[0], nil
+
+	return "", errors.New("video not found")
 }
 
 func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
@@ -81,9 +106,9 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 		return err
 	}
 
-	formats := videoInfo.Formats.Extremes(ytdl.FormatAudioBitrateKey, true)
+	formats := videoInfo.Formats.Best(ytdl.FormatAudioBitrateKey)
 	if len(formats) < 1 {
-		return errors.New("Link error")
+		return errors.New("link error")
 	}
 	format := formats[0]
 	downloadURL, err := videoInfo.GetDownloadURL(format)
@@ -141,8 +166,6 @@ func Stream(link string, stop *bool, err *error, s *discordgo.Session, guildID, 
 			return &youtube.Youtube{}
 		case strings.Contains(link, initSoundCloud):
 			return &soundcloud.SoundCloud{}
-		case strings.Contains(link, initChiaSeNhac):
-			return &chiasenhac.ChiaSeNhac{}
 		case strings.Contains(link, initFacebook):
 			return &facebook.Facebook{}
 		case strings.Contains(link, initVimeo):

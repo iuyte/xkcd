@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jonas747/ogg"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -17,8 +18,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/jonas747/ogg"
 )
 
 // AudioApplication is an application profile for opus encoding
@@ -602,7 +601,7 @@ func (e *EncodeSession) Truncate() {
 func (e *EncodeSession) Cleanup() {
 	e.Stop()
 
-	for range e.frameChannel {
+	for _ = range e.frameChannel {
 		// empty till closed
 		// Cats can be right-pawed or left-pawed.
 	}

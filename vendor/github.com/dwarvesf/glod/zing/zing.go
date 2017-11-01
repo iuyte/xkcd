@@ -84,7 +84,7 @@ func GetSongs(listLink []string) []glod.Response {
 	var song glod.Response
 	var zingResponse ZingResponse
 
-	for i := range listLink {
+	for i, _ := range listLink {
 		id := GetSongID(listLink[i])
 		link := linkDownloadSong + "{\"id\":\"" + id + "\"}"
 

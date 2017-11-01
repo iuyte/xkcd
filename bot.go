@@ -317,12 +317,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if c[0] == "play" {
-		if len(c) < 2 {
+	if c[0] == "play" || c[0] == "search" {
+		if strings.Count(m.ContentWithMentionsReplaced(), ";") > 1 {
+			spl := strings.Split(m.ContentWithMentionsReplaced(), ";")
+			for _, ts := range spl {
+				nml := m
+				nml.Content = ";" + ts
+				go messageCreate(s, nml)
+				time.Sleep(time.Second)
+			}
 			return
 		}
-		o := strings.Join(c[1:], " ")
-		o = strings.TrimRight(strings.TrimLeft(o, "<"), ">")
+
+		if len(c) < 2 {
+			err := s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
 
 		var (
 			err   error
@@ -330,6 +343,22 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			vch   *discordgo.VoiceState
 			guild *discordgo.Guild
 		)
+
+		o := strings.Join(c[1:], " ")
+		if c[0] == "play" {
+			o = strings.TrimRight(strings.TrimLeft(o, "<"), ">")
+		} else {
+			o = strings.Replace(strings.TrimSpace(o), " ", "+", -1)
+			o, err = UrlFromSearch(o)
+			if err != nil {
+				e := s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
+				if err != nil {
+					fmt.Println(e)
+				}
+				fmt.Println(err)
+			}
+		}
+		fmt.Println(o)
 
 		tch, err = s.Channel(m.Message.ChannelID)
 		if err != nil {
@@ -368,6 +397,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		err = Streams[tch.GuildID].Stream()
 		if err != nil {
+			err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
+			if err != nil {
+				fmt.Println(err)
+			}
 			fmt.Println(err)
 		}
 

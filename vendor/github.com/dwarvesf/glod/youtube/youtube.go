@@ -196,7 +196,7 @@ func (youtube *Youtube) GetDirectLink(link string) ([]glod.Response, error) {
 	}
 
 	_videoID := urlList[3]
-	videoID := _videoID[8:]
+	videoID := _videoID[8:len(_videoID)]
 	song, err := DownloadSingleVideo(videoID)
 	if err != nil {
 

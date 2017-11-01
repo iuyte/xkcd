@@ -27,11 +27,11 @@ func (a Atom) String() string {
 	if start+n > uint32(len(atomText)) {
 		return ""
 	}
-	return atomText[start: start+n]
+	return atomText[start : start+n]
 }
 
 func (a Atom) string() string {
-	return atomText[a>>8: a>>8+a&0xff]
+	return atomText[a>>8 : a>>8+a&0xff]
 }
 
 // fnv computes the FNV hash with an arbitrary starting value h.

@@ -27,10 +27,6 @@
 			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
 		},
 		{
-			"ImportPath": "github.com/dwarvesf/glod/chiasenhac",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
 			"ImportPath": "github.com/dwarvesf/glod/facebook",
 			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
 		},
@@ -99,6 +95,11 @@
 		{
 			"ImportPath": "golang.org/x/sys/windows",
 			"Rev": "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+		},
+		{
+			"ImportPath": "mvdan.cc/xurls",
+			"Comment": "v1.1.0-20-g284d56d",
+			"Rev": "284d56d6f9b9a86a9d5dcf57ec1340731a356d1b"
 		}
 	]
 }
