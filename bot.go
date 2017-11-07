@@ -36,7 +36,7 @@ var (
 	prefix = ";"
 	token  string
 	dg     *discordgo.Session
-	xkcds  []XKCD
+	total  int = 0
 )
 
 func main() {
@@ -51,11 +51,6 @@ func main() {
 		for {
 			<-t.C
 			rand.Seed(time.Now().Unix())
-			var err error
-			xkcds, err = StoreXKCD()
-			if err != nil {
-				fmt.Println(err)
-			}
 		}
 	}()
 
@@ -219,12 +214,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			xkcd XKCD
 			err  error
 			r    *regexp.Regexp
-			num  int
 		)
-		num, err = strconv.Atoi(c[1])
-		if err != nil {
-			fmt.Println(err)
-		}
 
 		r, err = regexp.Compile("^[0-9]+$")
 		if err != nil {
@@ -233,9 +223,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		if r.MatchString(c[1]) {
-			xkcd = xkcds[num]
+			xkcd, err = GetXkcdNum(c[1])
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
-			xkcd, err = GetXkcdTitleLocal(xkcds, strings.Join(c[1:], " "))
+			xkcd, err = GetXkcdTitle(strings.Join(c[1:], " "))
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -266,7 +259,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "latest" {
-		xkcd := xkcds[len(xkcds)-1]
+		xkcd, err := GetLatest()
+		if err != nil {
+			fmt.Println(err)
+		}
+		total = xkcd.Num
 
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
@@ -283,7 +280,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			},
 		}
 
-		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
@@ -292,7 +289,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if c[0] == "random" {
-		xkcd := xkcds[rand.Intn(len(xkcds))]
+		num := rand.Intn(total)
+		xkcd, err := GetXkcdNum(strconv.Itoa(num))
 
 		e := &discordgo.MessageEmbed{
 			Title:       "xkcd #" + strconv.Itoa(xkcd.Num) + ": " + xkcd.Title,
@@ -309,7 +307,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			},
 		}
 
-		_, err := s.ChannelMessageSendEmbed(m.ChannelID, e)
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, e)
 		if err != nil {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
