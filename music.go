@@ -62,6 +62,7 @@ const (
 var (
 	blocker = make(chan bool, 1)
 	Stop    = make(map[string]bool)
+	pause   = make(map[string]bool)
 	Streams = make(map[string]*NStreamer)
 )
 
@@ -139,10 +140,11 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 
 	vc.Speaking(true)
 	done := make(chan error)
-	dca.NewStream(encodingSession, vc, done)
+	session := dca.NewStream(encodingSession, vc, done)
 	go func() {
 		err = <-done
 		Stop[guildID] = true
+		session.SetPaused(pause[guildID])
 	}()
 	for !Stop[guildID] {
 		time.Sleep(250 * time.Millisecond)

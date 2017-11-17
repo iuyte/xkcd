@@ -75,7 +75,7 @@ func main() {
 		fmt.Println("Error opening Discord session: ", err)
 	}
 
-	go alertEvents()
+	// go alertEvents()
 
 	fmt.Println("The bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -114,26 +114,24 @@ func Token() (token string) {
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	s.UpdateStatus(0, prefix+"help")
+	s.UpdateStatus(0, prefix+"help | @xkcd help")
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Message.Content) < 1 {
 		return
 	}
-	if m.Message.ContentWithMentionsReplaced()[:len(prefix)] != prefix {
+	if m.Message.ContentWithMentionsReplaced()[:len(prefix)] != prefix &&
+		strings.Replace(m.Message.Content, s.State.User.Mention(), "", 1) == m.Message.Content {
 		return
 	}
 
-	c := strings.Split(strings.TrimSpace(strings.TrimPrefix(m.Message.Content, prefix)), " ")
+	c := strings.Split(strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(m.Message.Content, prefix), s.State.User.Mention())), " ")
 	c[0] = strings.ToLower(c[0])
 
 	if c[0] == "ping" {
 		s.ChannelMessageSend(m.ChannelID, "pong!")
-		return
-	}
-
-	if c[0] == "help" {
+	} else if c[0] == "help" {
 		var e *discordgo.MessageEmbed
 		e = &discordgo.MessageEmbed{
 			Title:       "Help",
@@ -157,10 +155,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				{
 					Name:  "random",
 					Value: "A random comic",
-				},
-				{
-					Name:  "event",
-					Value: "An interface for interacting with calender events. Say `;help` event for more!",
 				},
 			},
 			Footer: &discordgo.MessageEmbedFooter{
@@ -203,10 +197,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		return
-	}
-
-	if c[0] == "xkcd" {
+	} else if c[0] == "xkcd" {
 		if len(c) < 2 {
 			c = append(c, "")
 		}
@@ -255,10 +246,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
 		}
-		return
-	}
-
-	if c[0] == "latest" {
+	} else if c[0] == "latest" {
 		xkcd, err := GetLatest()
 		if err != nil {
 			fmt.Println(err)
@@ -286,9 +274,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
 		}
 		return
-	}
-
-	if c[0] == "random" {
+	} else if c[0] == "random" {
 		num := rand.Intn(total)
 		xkcd, err := GetXkcdNum(strconv.Itoa(num))
 
@@ -312,10 +298,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err)
 			s.ChannelMessageSend(m.ChannelID, xkcd.Img)
 		}
-		return
-	}
-
-	if c[0] == "play" || c[0] == "search" {
+	} else if c[0] == "play" || c[0] == "search" {
 		if strings.Count(m.ContentWithMentionsReplaced(), ";") > 1 {
 			spl := strings.Split(m.ContentWithMentionsReplaced(), ";")
 			for _, ts := range spl {
@@ -401,11 +384,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			fmt.Println(err)
 		}
-
-		return
-	}
-
-	if c[0] == "skip" {
+	} else if c[0] == "skip" {
 		tch, err := s.Channel(m.Message.ChannelID)
 		if err != nil {
 			fmt.Println(err)
@@ -450,10 +429,23 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				fmt.Println(err)
 			}
 		}
+	} else if c[0] == "pause" {
+		tch, err := s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	}
+		pause[tch.GuildID] = true
+	} else if c[0] == "resume" {
+		tch, err := s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	if c[0] == "event" {
+		pause[tch.GuildID] = false
+	} else if c[0] == "event" {
 		if len(c) < 2 {
 			return
 		}
@@ -518,10 +510,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				fmt.Println(err)
 			}
-			return
-		}
-
-		if c[1] == "list" {
+		} else if c[1] == "list" {
 			var fields []*discordgo.MessageEmbedField
 			for _, event := range Events {
 				fields = append(fields,
@@ -620,4 +609,13 @@ func alertEvents() {
 		}
 		<-t.C
 	}
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
