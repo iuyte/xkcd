@@ -220,7 +220,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				fmt.Println(err)
 			}
 		} else {
-			xkcd, err = GetXkcdTitle(strings.Join(c[1:], " "))
+			xkcd, err = GetXkcdTitle(strings.Join(c[1:], "\\s"))
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -379,7 +379,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		Stop[tch.GuildID] = false
-		Streams[tch.GuildID] = &NStreamer{
+		Streams[tch.GuildID] = &Streamer{
 			Url:       o,
 			GuildID:   tch.GuildID,
 			ChannelID: vch.ChannelID,
@@ -402,14 +402,27 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 		Streams[tch.GuildID] = nil
 		Stop[tch.GuildID] = true
+		exitQ = true
+		<-blocker
 		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
 		if err != nil {
 			fmt.Println(err)
 		}
-		return
-	}
-
-	if c[0] == "repeat" {
+		time.Sleep(time.Second)
+		exitQ = false
+	} else if c[0] == "exit" {
+		tch, err := s.Channel(m.Message.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		Streams[tch.GuildID] = nil
+		Stop[tch.GuildID] = true
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if c[0] == "repeat" {
 		tch, err := s.Channel(m.Message.ChannelID)
 		if err != nil {
 			fmt.Println(err)

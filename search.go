@@ -12,9 +12,9 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-var YoutubeKey = ""
+var YoutubeKey = "https://developers.google.com"
 
-const maxResults = 1
+const maxResults = 50
 
 func YTSearch(query string) (string, error) {
 	client := &http.Client{
@@ -35,7 +35,26 @@ func YTSearch(query string) (string, error) {
 		return "", errors.New("Error making search API call: " + err.Error())
 	}
 
-	return response.Items[0].Id.VideoId, nil
+	// Group video, channel, and playlist results in separate lists.
+	videos := make(map[string]string)
+
+	// Iterate through each item and add it to the correct list.
+	for _, item := range response.Items {
+		switch item.Id.Kind {
+		case "youtube#video":
+			videos[item.Id.VideoId] = item.Snippet.Title
+		default:
+			continue
+		}
+	}
+
+	for _, item := range response.Items {
+		if strings.Contains(item.Id.Kind, "video") {
+			return item.Id.VideoId, nil
+		}
+	}
+
+	return "", errors.New("Video not found")
 }
 
 func DevKey() (token string) {

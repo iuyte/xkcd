@@ -23,30 +23,6 @@
 			"Rev": "c4a08de52513a9057d4ebf127a23ba8f4160f8d8"
 		},
 		{
-			"ImportPath": "github.com/dwarvesf/glod",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
-			"ImportPath": "github.com/dwarvesf/glod/facebook",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
-			"ImportPath": "github.com/dwarvesf/glod/soundcloud",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
-			"ImportPath": "github.com/dwarvesf/glod/vimeo",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
-			"ImportPath": "github.com/dwarvesf/glod/youtube",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
-			"ImportPath": "github.com/dwarvesf/glod/zing",
-			"Rev": "0bb48a2bf51595d1f31c5691b36eb7dbc40c94f0"
-		},
-		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Comment": "v1.2.0-6-ga69d9f6",
 			"Rev": "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
@@ -81,6 +57,14 @@
 			"Rev": "ed5229da99e3a6df35c756cd64b6982d19505d86"
 		},
 		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+		},
+		{
 			"ImportPath": "golang.org/x/net/html",
 			"Rev": "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
 		},
@@ -97,9 +81,24 @@
 			"Rev": "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
 		},
 		{
-			"ImportPath": "mvdan.cc/xurls",
-			"Comment": "v1.1.0-20-g284d56d",
-			"Rev": "284d56d6f9b9a86a9d5dcf57ec1340731a356d1b"
+			"ImportPath": "google.golang.org/api/gensupport",
+			"Rev": "906273f42cdebd65de3a53f30dd9e23de1b55ba9"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi",
+			"Rev": "906273f42cdebd65de3a53f30dd9e23de1b55ba9"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi/internal/uritemplates",
+			"Rev": "906273f42cdebd65de3a53f30dd9e23de1b55ba9"
+		},
+		{
+			"ImportPath": "google.golang.org/api/googleapi/transport",
+			"Rev": "906273f42cdebd65de3a53f30dd9e23de1b55ba9"
+		},
+		{
+			"ImportPath": "google.golang.org/api/youtube/v3",
+			"Rev": "906273f42cdebd65de3a53f30dd9e23de1b55ba9"
 		}
 	]
 }

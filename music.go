@@ -19,20 +19,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
-	"unicode"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dwarvesf/glod"
-	"github.com/dwarvesf/glod/facebook"
-	"github.com/dwarvesf/glod/soundcloud"
-	"github.com/dwarvesf/glod/vimeo"
-	"github.com/dwarvesf/glod/youtube"
-	"github.com/dwarvesf/glod/zing"
 	"github.com/jonas747/dca"
 	"github.com/rylio/ytdl"
 )
@@ -42,7 +33,7 @@ type ObjectResponse struct {
 	Name string
 }
 
-type NStreamer struct {
+type Streamer struct {
 	Url       string
 	GuildID   string
 	ChannelID string
@@ -61,18 +52,19 @@ var (
 	blocker = make(chan bool, 1)
 	Stop    = make(map[string]bool)
 	pause   = make(map[string]bool)
-	Streams = make(map[string]*NStreamer)
+	exitQ   = false
+	Streams = make(map[string]*Streamer)
 )
 
-func (s *NStreamer) Stream() error {
-	return NStream(s.Url, s.GuildID, s.ChannelID, s.S)
+func (s *Streamer) Stream() error {
+	return Stream(s.Url, s.GuildID, s.ChannelID, s.S)
 }
 
 func UrlFromSearch(tag string) (string, error) {
 	return YTSearch(tag)
 }
 
-func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
+func Stream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 	options := dca.StdEncodeOptions
 	options.RawOutput = true
 	options.Bitrate = 96
@@ -104,6 +96,10 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 		Stop[guildID] = false
 	}()
 	blocker <- true
+	if exitQ {
+		return nil
+	}
+
 	var vc *discordgo.VoiceConnection
 	defer func() {
 		vc.Speaking(false)
@@ -130,103 +126,4 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 		return err
 	}
 	return nil
-}
-
-func Stream(link string, stop *bool, err *error, s *discordgo.Session, guildID, channelID string) {
-	defer func() {
-		*stop = false
-	}()
-	var ggl glod.Source
-	if ggl = func() glod.Source {
-		switch {
-		case strings.Contains(link, initZingMp3):
-			return &zing.Zing{}
-		case strings.Contains(link, initYoutube):
-			return &youtube.Youtube{}
-		case strings.Contains(link, initSoundCloud):
-			return &soundcloud.SoundCloud{}
-		case strings.Contains(link, initFacebook):
-			return &facebook.Facebook{}
-		case strings.Contains(link, initVimeo):
-			return &vimeo.Vimeo{}
-		}
-		return nil
-	}(); ggl == nil {
-		*err = errors.New("source link read problem")
-		return
-	}
-
-	var objs []ObjectResponse
-	listResponse, e := ggl.GetDirectLink(link)
-	if e != nil {
-		*err = e
-		return
-	}
-	for _, r := range listResponse {
-		temp := r.StreamURL
-		if strings.Contains(link, initYoutube) || strings.Contains(link, initZingMp3) || strings.Contains(link, initVimeo) {
-			splitUrl := strings.Split(temp, "~")
-			temp = splitUrl[0]
-		}
-
-		resp, e := http.Get(temp)
-		if e != nil {
-			*err = errors.New("failed to get response from stream")
-			return
-		}
-
-		fullName := fmt.Sprintf("%s%s", r.Title, ".mp3")
-
-		fullName = strings.Map(func(r rune) rune {
-			if unicode.IsSpace(r) {
-				return -1
-			}
-			return r
-		}, fullName)
-
-		objs = append(objs, ObjectResponse{
-			resp,
-			fullName,
-		})
-	}
-
-	var (
-		vc *discordgo.VoiceConnection
-	)
-
-	vc.Speaking(true)
-	for _, o := range objs {
-		func() {
-			defer o.Resp.Body.Close()
-			opts := dca.StdEncodeOptions
-			opts.RawOutput = true
-			opts.Bitrate = 120
-
-			encoder, e := dca.EncodeMem(o.Resp.Body, opts)
-			if e != nil {
-				*err = errors.New("encoding bork")
-				return
-			}
-
-			for !*stop {
-				frame, e := encoder.OpusFrame()
-				if e != nil {
-					if e != io.EOF {
-						*err = errors.New("connection bork 1")
-						return
-					}
-
-					break
-				}
-
-				select {
-				case vc.OpusSend <- frame:
-				case <-time.After(time.Second):
-					*err = errors.New("connection bork 2")
-					return
-				}
-			}
-		}()
-	}
-	*err = errors.New("Done")
 }
