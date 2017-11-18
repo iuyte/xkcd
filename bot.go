@@ -54,6 +54,7 @@ func main() {
 		}
 	}()
 
+	YoutubeKey = DevKey()
 	token = Token()
 	if token == "" {
 		fmt.Println("No token provided. Please set DISCORD_TOKEN to the appropriate token")
@@ -316,6 +317,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				fmt.Println(err)
 			}
 			return
+		} else if len(c) > 2 && c[0] == "play" {
+			for _, ci := range c[1:] {
+				nml := &discordgo.MessageCreate{}
+				*nml = *m
+				nml.Content = ";play " + ci
+				go messageCreate(s, nml)
+				time.Sleep(time.Second)
+			}
+			return
 		}
 
 		var (
@@ -329,7 +339,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if c[0] == "play" {
 			o = strings.TrimRight(strings.TrimLeft(o, "<"), ">")
 		} else {
-			o = strings.Replace(strings.TrimSpace(o), " ", "+", -1)
+			o = strings.Replace(strings.TrimSpace(o), " ", "%20", -1)
 			o, err = UrlFromSearch(o)
 			if err != nil {
 				e := s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
@@ -437,6 +447,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		pause[tch.GuildID] = true
+
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
 	} else if c[0] == "resume" {
 		tch, err := s.Channel(m.Message.ChannelID)
 		if err != nil {
@@ -445,6 +460,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		pause[tch.GuildID] = false
+
+		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
+		if err != nil {
+			fmt.Println(err)
+		}
 	} else if c[0] == "event" {
 		if len(c) < 2 {
 			return

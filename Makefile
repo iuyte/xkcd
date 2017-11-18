@@ -12,7 +12,7 @@ arm:
 	$(GO_BUILD_ENV) GOARCH=arm go build -v -o $(OUT_FILE) .
 
 docker:
-	docker build -t iuyte/xkcd . --build-arg TOKEN='$(DISCORD_TOKEN)'
+	docker build -t iuyte/xkcd . --build-arg TOKEN='$(DISCORD_TOKEN)' --build-arg YOUTUBE_TOKEN='$(YOUTUBE_TOKEN)'
 
 run:
 	docker run iuyte/xkcd

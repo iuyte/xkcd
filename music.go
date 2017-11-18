@@ -21,9 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -71,29 +69,7 @@ func (s *NStreamer) Stream() error {
 }
 
 func UrlFromSearch(tag string) (string, error) {
-	var (
-		b   []byte
-		url string = "http://www.youtube.com/results?search_query=" + tag
-	)
-	fmt.Println(url)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	b, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	st := strings.Split(string(b),
-		"<a id=\"thumbnail\" class=\"yt-simple-endpoint inline-block style-scope ytd-thumbnail\" aria-hidden=\"true\" tabindex=\"-1\" href=\"")[1]
-	re := regexp.MustCompile("\\/watch?v=[^\"]+")
-	return "https://youtube.com/" + re.FindAllString(st, 1)[0], nil
-
-	return "", errors.New("video not found")
+	return YTSearch(tag)
 }
 
 func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
@@ -144,10 +120,11 @@ func NStream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 	go func() {
 		err = <-done
 		Stop[guildID] = true
-		session.SetPaused(pause[guildID])
 	}()
 	for !Stop[guildID] {
 		time.Sleep(250 * time.Millisecond)
+		session.SetPaused(pause[guildID])
+		vc.Speaking(pause[guildID])
 	}
 	if err != nil && err != io.EOF {
 		return err
