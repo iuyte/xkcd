@@ -18,6 +18,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -33,11 +34,18 @@ import (
 )
 
 var (
-	prefix = ";"
-	token  string
-	dg     *discordgo.Session
-	total  int = 0
+	YoutubeKey = "https://developers.google.com"
+	prefix     = ";"
+	token      string
+	dg         *discordgo.Session
+	total      int = 0
 )
+
+func init() {
+	flag.StringVar(&token, "t", "", "Bot Token")
+	flag.StringVar(&YoutubeKey, "y", "", "Youtube token")
+	flag.Parse()
+}
 
 func main() {
 	err := LoadCalenders()
@@ -54,8 +62,14 @@ func main() {
 		}
 	}()
 
-	YoutubeKey = DevKey()
-	token = Token()
+	if YoutubeKey == "" {
+		YoutubeKey = DevKey()
+	}
+
+	if token == "" {
+		token = Token()
+	}
+
 	if token == "" {
 		fmt.Println("No token provided. Please set DISCORD_TOKEN to the appropriate token")
 		return
@@ -342,23 +356,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			o = strings.Replace(strings.TrimSpace(o), " ", "%20", -1)
 			o, err = UrlFromSearch(o)
 			if err != nil {
+				fmt.Println("Search:", err)
 				e := s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
-				if err != nil {
-					fmt.Println(e)
+				if e != nil {
+					fmt.Println("Reaction:", e)
 				}
-				fmt.Println(err)
 			}
 		}
-		fmt.Println(o)
+
+		fmt.Println("URL:", o)
 
 		tch, err = s.Channel(m.Message.ChannelID)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Get channel:", err)
 			return
 		}
 		guild, err = s.Guild(tch.GuildID)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Get guild:", err)
 			return
 		}
 
@@ -368,6 +383,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				break
 			}
 		}
+
 		if vch == nil {
 			fmt.Println("User not joined channel")
 			return
@@ -375,7 +391,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👌")
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Reaction:", err)
 		}
 
 		Stop[tch.GuildID] = false
@@ -388,11 +404,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		err = Streams[tch.GuildID].Stream()
 		if err != nil {
+			fmt.Println("Stream:", err)
 			err = s.MessageReactionAdd(m.Message.ChannelID, m.ID, "👎")
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println("Reaction:", err)
 			}
-			fmt.Println(err)
 		}
 	} else if c[0] == "skip" {
 		tch, err := s.Channel(m.Message.ChannelID)

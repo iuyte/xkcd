@@ -72,22 +72,22 @@ func Stream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 
 	videoInfo, err := ytdl.GetVideoInfo(videoURL)
 	if err != nil {
-		return err
+		return errors.New("Get video info " + err.Error())
 	}
 
 	formats := videoInfo.Formats.Best(ytdl.FormatAudioBitrateKey)
 	if len(formats) < 1 {
-		return errors.New("link error")
+		return errors.New("link error (no formats)")
 	}
 	format := formats[0]
 	downloadURL, err := videoInfo.GetDownloadURL(format)
 	if err != nil {
-		return err
+		return errors.New("Download URL " + err.Error())
 	}
 
 	encodingSession, err := dca.EncodeFile(downloadURL.String(), options)
 	if err != nil {
-		return err
+		return errors.New("Encoding session " + err.Error())
 	}
 
 	defer func() {
@@ -107,7 +107,7 @@ func Stream(videoURL, guildID, channelID string, s *discordgo.Session) error {
 	}()
 	vc, err = s.ChannelVoiceJoin(guildID, channelID, false, true)
 	if err != nil {
-		return err
+		return errors.New("Join voice channel " + err.Error())
 	}
 
 	vc.Speaking(true)

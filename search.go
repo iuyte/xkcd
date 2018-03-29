@@ -12,8 +12,6 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-var YoutubeKey = "https://developers.google.com"
-
 const maxResults = 50
 
 func YTSearch(query string) (string, error) {

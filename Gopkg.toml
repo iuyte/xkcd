@@ -23,15 +23,15 @@
 
 [[constraint]]
   name = "github.com/bwmarrin/discordgo"
-  version = "0.17.0"
+  version = "0.18.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/jonas747/dca"
 
 [[constraint]]
+	branch = "master"
   name = "github.com/rylio/ytdl"
-  version = "0.5.1"
 
 [[constraint]]
   branch = "master"
